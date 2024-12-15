@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, AlertTriangle } from 'lucide-react';
+import { Upload, AlertTriangle, X } from 'lucide-react';
 import type { FileUploadState, ApiError } from '../types';
 import { ErrorDisplay } from './ErrorDisplay';
 
@@ -10,7 +10,41 @@ interface FileUploadProps {
 }
 
 export function FileUpload({ fileState, onFileChange }: FileUploadProps) {
-  const onDrop = useCallback((acceptedFiles: File[]) => {
+  const validatePdf = async (file: File): Promise<{ isValid: boolean; pageCount?: number }> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const arrayBuffer = e.target?.result as ArrayBuffer;
+          // Check for PDF magic number (%PDF-)
+          const firstBytes = new Uint8Array(arrayBuffer.slice(0, 5));
+          const magicNumber = String.fromCharCode(...firstBytes);
+          if (magicNumber !== '%PDF-') {
+            resolve({ isValid: false });
+            return;
+          }
+
+          // Count pages by looking for /Page objects
+          const text = String.fromCharCode(...new Uint8Array(arrayBuffer));
+          const pageMatches = text.match(/\/Type\s*\/Page[^s]/g);
+          const pageCount = pageMatches ? pageMatches.length : 0;
+          
+          resolve({ isValid: true, pageCount });
+        } catch (error) {
+          resolve({ isValid: false });
+        }
+      };
+      reader.onerror = () => resolve({ isValid: false });
+      reader.readAsArrayBuffer(file);
+    });
+  };
+
+  const handleRemoveFile = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onFileChange(null, null);
+  };
+
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
     if (file?.type !== 'application/pdf') {
       onFileChange(null, {
@@ -33,6 +67,35 @@ export function FileUpload({ fileState, onFileChange }: FileUploadProps) {
       });
       return;
     }
+
+    // Validate PDF structure and page count
+    const { isValid, pageCount } = await validatePdf(file);
+    
+    if (!isValid) {
+      onFileChange(null, {
+        error: 'Invalid PDF file',
+        message: 'The file appears to be corrupted or is not a valid PDF',
+        details: {
+          filename: file.name,
+          suggestion: 'Please ensure the file is a valid PDF document and try again.'
+        }
+      });
+      return;
+    }
+
+    if (pageCount && pageCount > 10) {
+      onFileChange(null, {
+        error: 'Too many pages',
+        message: `The PDF has ${pageCount} pages, but the maximum allowed is 10 pages`,
+        details: {
+          current_pages: pageCount,
+          max_pages: 10,
+          suggestion: 'Please split the document into smaller parts or select a shorter document.'
+        }
+      });
+      return;
+    }
+
     onFileChange(file, null);
   }, [onFileChange]);
 
@@ -61,9 +124,18 @@ export function FileUpload({ fileState, onFileChange }: FileUploadProps) {
       {fileState.error && <ErrorDisplay error={fileState.error} />}
       
       {fileState.file && !fileState.error && (
-        <div className="mt-2 text-sm text-gray-600">
-          <p>Selected file: {fileState.file.name}</p>
-          <p>Size: {(fileState.file.size / 1024 / 1024).toFixed(2)} MB</p>
+        <div className="mt-2 text-sm text-gray-600 flex items-center justify-between bg-gray-50 px-4 py-2 rounded-md">
+          <div>
+            <p>Selected file: {fileState.file.name}</p>
+            <p>Size: {(fileState.file.size / 1024 / 1024).toFixed(2)} MB</p>
+          </div>
+          <button
+            onClick={handleRemoveFile}
+            className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+            title="Remove file"
+          >
+            <X className="h-5 w-5 text-gray-500" />
+          </button>
         </div>
       )}
 
