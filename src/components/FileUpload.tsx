@@ -71,7 +71,7 @@ export function FileUpload({ fileState, onFileChange }: FileUploadProps) {
         <AlertTriangle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
         <div className="text-sm text-red-800">
           <p className="font-medium">Demo Version</p>
-          <p>This application is for demonstration purposes only and uses Mistral_Large_Latest as LLM. Please do not upload sensitive production data.</p>
+          <p>This application is for demonstration purposes only and uses Mistral_Large_Latest as LLM. Please do not upload sensitive production data. 10 Pages is the limit.</p>
         </div>
       </div>
     </div>
