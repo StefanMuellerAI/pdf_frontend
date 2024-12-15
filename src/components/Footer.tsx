@@ -35,14 +35,14 @@ export function Footer() {
         isOpen={showImprint}
         onClose={() => setShowImprint(false)}
         title="Imprint"
-        markdownPath="/imprint.md"
+        markdownPath="/legal/imprint.md"
       />
 
       <MarkdownModal
         isOpen={showPrivacy}
         onClose={() => setShowPrivacy(false)}
         title="Privacy Policy"
-        markdownPath="/privacy.md"
+        markdownPath="/legal/privacy_policy.md"
       />
     </>
   );
