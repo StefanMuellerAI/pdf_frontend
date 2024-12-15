@@ -9,7 +9,8 @@ import type {
   ProcessPreferences,
   AnonymizationOption,
   UploadResponse,
-  ProcessingStatus
+  ProcessingStatus,
+  ApiError
 } from './types';
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -19,7 +20,6 @@ function App() {
   const [fileState, setFileState] = useState<FileUploadState>({ file: null, error: null });
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [taskId, setTaskId] = useState<string | null>(null);
   const [progress, setProgress] = useState<{ currentPage?: number; totalPages?: number }>({});
 
@@ -42,11 +42,9 @@ function App() {
     }
   ];
 
-  const handleFileChange = (file: File | null, error: string | null) => {
+  const handleFileChange = (file: File | null, error: ApiError | null) => {
     setFileState({ file, error });
-    setError(null);
     if (file && !error) {
-      // Set default selections
       setSelectedCategories(['emails', 'names', 'phone_numbers']);
     } else {
       setSelectedCategories([]);
@@ -74,7 +72,7 @@ function App() {
 
     try {
       setIsProcessing(true);
-      setError(null);
+      setFileState(prev => ({ ...prev, error: null }));
 
       const formData = new FormData();
       formData.append('file', fileState.file);
@@ -96,17 +94,28 @@ function App() {
         }
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error('Failed to upload file');
+        setFileState(prev => ({ ...prev, error: data as ApiError }));
+        setIsProcessing(false);
+        return;
       }
 
-      const data: UploadResponse = await response.json();
-      setTaskId(data.task_id);
+      const uploadResponse = data as UploadResponse;
+      setTaskId(uploadResponse.task_id);
 
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      const error: ApiError = {
+        error: 'Upload failed',
+        message: 'Failed to upload file',
+        details: {
+          technical_error: err instanceof Error ? err.message : 'Unknown error',
+          suggestion: 'Please try again or contact support if the problem persists.'
+        }
+      };
+      setFileState(prev => ({ ...prev, error }));
       setIsProcessing(false);
-      setTaskId(null);
     }
   };
 
@@ -123,7 +132,14 @@ function App() {
         });
 
         if (!response.ok) {
-          throw new Error('Failed to check status');
+          const errorData = await response.json();
+          setFileState(prev => ({ 
+            ...prev, 
+            error: errorData as ApiError 
+          }));
+          setIsProcessing(false);
+          setTaskId(null);
+          return;
         }
 
         // Check if the response is a PDF
@@ -156,13 +172,39 @@ function App() {
 
         // If not PDF, then it's a status update
         const status: ProcessingStatus = await response.json();
+        if (status.status === 'Failed') {
+          setFileState(prev => ({
+            ...prev,
+            error: {
+              error: 'Processing failed',
+              message: status.error || 'An unknown error occurred during processing',
+              details: {
+                suggestion: 'Please try again or contact support if the problem persists.'
+              }
+            }
+          }));
+          setIsProcessing(false);
+          setTaskId(null);
+          return;
+        }
+
         setProgress({
           currentPage: status.current_page,
           totalPages: status.total_pages
         });
 
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to check status');
+        setFileState(prev => ({
+          ...prev,
+          error: {
+            error: 'Status check failed',
+            message: 'Failed to check processing status',
+            details: {
+              technical_error: err instanceof Error ? err.message : 'Unknown error',
+              suggestion: 'Please try again or contact support if the problem persists.'
+            }
+          }
+        }));
         setIsProcessing(false);
         setTaskId(null);
       }
@@ -196,19 +238,6 @@ function App() {
                 onSelectAll={handleSelectAll}
                 onDeselectAll={handleDeselectAll}
               />
-            )}
-
-            {error && (
-              <div className="rounded-md bg-red-50 p-4">
-                <div className="flex">
-                  <div className="ml-3">
-                    <h3 className="text-sm font-medium text-red-800">Error</h3>
-                    <div className="mt-2 text-sm text-red-700">
-                      <p>{error}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
             )}
 
             {canSubmit && (

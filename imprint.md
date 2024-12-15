@@ -1,28 +1,28 @@
 # Imprint
 
 ## Company Information
-Redact-o-mat
-Example Street 123
-12345 City
-Germany
+Stefan Müller
+StefanAI – Research & Development
+Graeffstr. 22
+50823 Cologne, Germany
 
 ## Contact
-Email: contact@example.com
-Phone: +49 123 456789
-
-## Legal Representatives
-John Doe
-Managing Director
-
-## Register Information
-Commercial Register: Sample City
-Registration Number: HRB 12345
+Phone: +49 221/5702984
+Email: info@stefanai.de
 
 ## VAT ID
-VAT ID Number according to § 27a Value Added Tax Act: DE123456789
+Value Added Tax Identification Number according to § 27a of the German VAT Act:
+DE347707954
 
-## Responsible for Content
-John Doe
-Example Street 123
-12345 City
-Germany 
+## Responsible for content
+Stefan Müller
+Graeffstr. 22
+50823 Cologne, Germany
+
+## EU Dispute Resolution
+The European Commission provides a platform for online dispute resolution (ODR): [https://ec.europa.eu/consumers/odr/](https://ec.europa.eu/consumers/odr/)
+
+You can find our email address in the legal notice above.
+
+## Consumer Dispute Resolution
+We are neither willing nor obligated to participate in dispute resolution proceedings before a consumer arbitration board. 

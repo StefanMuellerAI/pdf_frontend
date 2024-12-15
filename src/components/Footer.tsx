@@ -42,7 +42,7 @@ export function Footer() {
         isOpen={showPrivacy}
         onClose={() => setShowPrivacy(false)}
         title="Privacy Policy"
-        markdownPath="/privacy_policy.md"
+        markdownPath="/privacy.md"
       />
     </>
   );

@@ -6,7 +6,7 @@ export interface AnonymizationOption {
 
 export interface FileUploadState {
   file: File | null;
-  error: string | null;
+  error: ApiError | null;
 }
 
 export interface ProcessPreferences {
@@ -17,10 +17,25 @@ export interface ProcessPreferences {
 
 export interface UploadResponse {
   task_id: string;
+  message: string;
 }
 
 export interface ProcessingStatus {
-  status: 'Processing' | 'Completed';
-  current_page: number;
-  total_pages: number;
+  status: 'Processing' | 'Completed' | 'Failed';
+  current_page?: number;
+  total_pages?: number;
+  error?: string;
+}
+
+export interface ApiError {
+  error: string;
+  message: string;
+  details?: {
+    suggestion?: string;
+    technical_error?: string;
+    filename?: string;
+    current_pages?: number;
+    max_pages?: number;
+    [key: string]: any;
+  };
 }
